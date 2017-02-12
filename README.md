@@ -4,7 +4,7 @@ It uses sockets in the internet domain.
 
 # Files
 There are five different files needed:
-server_chat.c
+server_chat.c\n
 client_chat.c
 client_chat1.c
 client_chat2.c
