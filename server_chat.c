@@ -35,7 +35,7 @@ size_t addr_len;
 struct info utenti[FD_SETSIZE];
 fd_set readfds, testfds, writefds, utentifds;//liberifds è il set di utenti non impegnati in nessuna chat, e che possono quindi essere aggiunti ad una chat privata
 struct timeval timeout;
-pthread_mutex_t mreg;
+pthread_mutex_t mreg, mod_avviso;
 
 void eliminaclient(int fd, fd_set* readfds, fd_set* writefds, int flag);
 void addmember(int fd,char name[256], fd_set* addset);
@@ -61,6 +61,7 @@ void *private_handler(void*arg);
   timeout.tv_usec=0;
   
   pthread_mutex_init(&mreg,NULL);
+  pthread_mutex_init(&mod_avviso,NULL);
   
   //esecuzione
   //creazione socket
@@ -99,8 +100,10 @@ void *private_handler(void*arg);
     
     if(mie_letture<avviso.scritture){
      inviamsg(avviso.text, writefds);
+     pthread_mutex_lock(&mod_avviso);
      avviso.letture++;
      mie_letture++;
+     pthread_mutex_unlock(&mod_avviso);
      }
     
     result=select(FD_SETSIZE, &testfds, (fd_set*)0, (fd_set*)0, (struct timeval *)&timeout);
@@ -197,6 +200,7 @@ void addmember(int fd, char name[256], fd_set* addset){
 void *mod_handler(){
  char buffer[256];
  int nreads;
+ int running;
  
  while(1){
   nreads=read(mod_sock, (void*)buffer, (size_t)sizeof(buffer));
@@ -206,26 +210,33 @@ void *mod_handler(){
   printf("Moderatore disconnesso\n");
   pthread_exit(NULL);
    }
+  running=1;
+  pthread_mutex_lock(&mod_avviso);
   sprintf(avviso.text, "[Moderatore] %s", buffer);
   avviso.letture=0;
   avviso.scritture++;
-  do {
+  pthread_mutex_unlock(&mod_avviso);
+  sleep(2);
+  while(running){
+   pthread_mutex_lock(&mod_avviso);
+   if(avviso.letture<stanze_presenti){
+   pthread_mutex_unlock(&mod_avviso);
    strcpy(buffer,"Invio in corso...\n");
    write(mod_sock, (void*)buffer,(size_t)strlen(buffer)+1);
    sleep(2);
-   } while(avviso.letture<stanze_presenti);
+    }
+  else {
+   pthread_mutex_unlock(&mod_avviso);
+   strcpy(buffer,"Messaggio recapitato a tutti gli utenti\n");
+   write(mod_sock,(void*)buffer,(size_t)strlen(buffer)+1);
+   running=0;
+   } 
   strcpy(buffer,"Messaggio recapitato a tutti gli utenti\n");
   write(mod_sock,(void*)buffer,(size_t)strlen(buffer)+1);
-  
-   
-   
-   
-  
-  
-  
- }  
+  }  
 
-}     
+ }  
+}   
 void *private_handler(void*arg){
  int fd=*((int*)arg), nreads, fd1, result, mie_letture;
  char msg[256], newmsg[256];
@@ -244,8 +255,10 @@ void *private_handler(void*arg){
     
     if(mie_letture<avviso.scritture){
      inviamsg(avviso.text, myfds);
+     pthread_mutex_lock(&mod_avviso);
      avviso.letture++;
      mie_letture++;
+     pthread_mutex_unlock(&mod_avviso);
      }
     
     result=select(FD_SETSIZE, &testfds, (fd_set*)0, (fd_set*)0, (struct timeval*)&timeout);
@@ -434,7 +447,7 @@ void *thread_listen(){
     
 void eliminaclient(int fd, fd_set* readfds, fd_set* writefds, int flag){
  char msg[256], nome[200];//per avvisare gli altri utenti
- printf("Sono entrato\n");
+ printf("Operazione di chiusura\n");
  int fd1;
  
  FD_CLR(fd, readfds);

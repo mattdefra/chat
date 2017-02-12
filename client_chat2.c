@@ -25,12 +25,12 @@ void closeconnection();
   strcpy(name, argv[1]);
   
   //printf("%s\n", name);
-  //printf("Inserire nome:");
-  //scanf("%s%*c", nome);
-  //printf("porta:");
-  //scanf("%d%*c", &port);
+  printf("Inserire nome:");
+  scanf("%s%*c", nome);
+  printf("porta:");
+  scanf("%d%*c", &port);
   
-  strcpy(nome, "localhost");
+  //strcpy(nome, "localhost");
   
   //creazione socket
   sock=socket(AF_INET, SOCK_STREAM, 0);

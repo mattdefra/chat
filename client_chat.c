@@ -26,11 +26,11 @@ void added(char nome[256]);
   char nome[256], buffer[256];
   fd_set readfds, testfds;
   
-  //printf("Inserire nome:");
-  //scanf("%s%*c", nome);
-  //printf("porta:");
-  //scanf("%d%*c", &port);
-  strcpy(nome, "localhost");
+  printf("Inserire nome:");
+  scanf("%s%*c", nome);
+  printf("porta:");
+  scanf("%d%*c", &port);
+  //strcpy(nome, "localhost");
   //creazione socket
   sock=socket(AF_INET, SOCK_STREAM, 0);
   if (sock==-1){
