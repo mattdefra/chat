@@ -57,7 +57,7 @@ If the user is in the public room, he can either create a private room or be add
 To enter the chat as a moderator, the file to run is the client_mod. Just one mod at a time is allowed.
 
 
-In the public room, the available commands are @help, to open a private room, and @close to exit.
+In the public room, the available commands are @new, to open a private room, and @close to exit.
 In the private room, the available commands are @add to add a member and @close to exit.
 
 
