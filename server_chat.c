@@ -35,6 +35,7 @@ size_t addr_len;
 struct info utenti[FD_SETSIZE];
 fd_set readfds, testfds, writefds, utentifds;//liberifds è il set di utenti non impegnati in nessuna chat, e che possono quindi essere aggiunti ad una chat privata
 struct timeval timeout;
+pthread_mutex_t mreg;
 
 void eliminaclient(int fd, fd_set* readfds, fd_set* writefds, int flag);
 void addmember(int fd,char name[256], fd_set* addset);
@@ -58,6 +59,9 @@ void *private_handler(void*arg);
   
   timeout.tv_sec=2;
   timeout.tv_usec=0;
+  
+  pthread_mutex_init(&mreg,NULL);
+  
   //esecuzione
   //creazione socket
   server_sock=socket(AF_INET, SOCK_STREAM, 0);
@@ -73,7 +77,7 @@ void *private_handler(void*arg);
       perror("Errore bind\n");
       exit(EXIT_FAILURE);
       }  
-   getsockname(server_sock,(struct sockaddr*)&server_address, &addr_len);
+   getsockname(server_sock,(struct sockaddr*)&server_address,(socklen_t*)&addr_len);
    printf("Porta: %d\n", ntohs(server_address.sin_port));   
    if (listen(server_sock, 5)==-1){
       perror("Errore listen\n");
@@ -223,7 +227,7 @@ void *mod_handler(){
 
 }     
 void *private_handler(void*arg){
- int fd=(int)arg, nreads, fd1, result, mie_letture;
+ int fd=*((int*)arg), nreads, fd1, result, mie_letture;
  char msg[256], newmsg[256];
  fd_set myfds, testfds;
  pthread_t add;
@@ -302,7 +306,9 @@ void *private_handler(void*arg){
 }     
 void *thread_reg(void*arg){
   int sock, flag, fd, result,op;
-  sock=(int)arg;
+  pthread_mutex_lock(&mreg);
+  sock=*((int*)arg);
+  pthread_mutex_unlock(&mreg);
   char msg[256], nome[256];
   read(sock, (void*)&flag,(size_t)sizeof(int));
   op=(int)flag;
@@ -354,7 +360,10 @@ void *thread_reg(void*arg){
            }
           else {
            utenti[fd].stanze_aperte++;
-           pthread_create(&private, NULL, private_handler,(void*)sock);
+           static int priv_sock;
+           priv_sock=sock;
+           pthread_create(&private, NULL, private_handler,(void*)&priv_sock);
+           
            }
             
           break;
@@ -403,17 +412,23 @@ void *thread_reg(void*arg){
 
      
 void *thread_listen(){
+ 
+ pthread_t reg;
+ 
 
+ 
  while(1){
-  pthread_t reg;
+  pthread_mutex_lock(&mreg);
   addr_len = sizeof(client_address);
-  client_sock = accept(server_sock, (struct addr*)&client_address, &addr_len);
+  client_sock = accept(server_sock, (struct sockaddr*)&client_address,(socklen_t*) &addr_len);
   printf("trovata richiesa %d\n", client_sock);
-  pthread_create(&reg, NULL, thread_reg, (void*)client_sock);
+  pthread_mutex_unlock(&mreg);
+  pthread_create(&reg, NULL, thread_reg, (void*)&client_sock);
   if(reg==-1){
   perror("Impossibile registrare utente\n");
   //invio messaggio di errore
-  } 
+  }
+  else sleep(2);//lascio spazio al thread di registrazione 
  }
 } 
     
