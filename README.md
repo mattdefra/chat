@@ -4,7 +4,7 @@ It uses sockets in the internet domain.
 
 # Files
 There are five different files needed:
-server_chat.c\n
+server_chat.c
 client_chat.c
 client_chat1.c
 client_chat2.c
@@ -45,6 +45,7 @@ In the private room,the available commands are @add to add a member and @close t
 
 Server:
 cc -o server_chat server_chat.c -lpthread
+
 Client:
 cc -o client_chat client_chat.c
 cc -o client_chat1 client_chat1.c
