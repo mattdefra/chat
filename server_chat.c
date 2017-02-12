@@ -26,7 +26,7 @@ struct mod_msg{
 };
 
 
-int server_sock, client_sock, mod_sock;
+int server_sock, client_sock, mod_sock, mie_letture;
 int stanze_presenti;
 struct mod_msg avviso;
 struct sockaddr_in server_address, client_address;
@@ -44,7 +44,7 @@ void *thread_listen();
 void *thread_reg(void*arg);
 void *private_handler(void*arg);
  int main(){
-  int running=1, fd, fd1, connessi, mie_letture;
+  int running=1, fd, fd1, connessi;
   //struct sockaddr_in server_address, client_address;
   //size_t addr_len;
   char msg[DIM], newmsg[DIM];
@@ -231,20 +231,19 @@ void *mod_handler(){
    write(mod_sock,(void*)buffer,(size_t)strlen(buffer)+1);
    running=0;
    } 
-  strcpy(buffer,"Messaggio recapitato a tutti gli utenti\n");
-  write(mod_sock,(void*)buffer,(size_t)strlen(buffer)+1);
+  
   }  
 
  }  
 }   
 void *private_handler(void*arg){
- int fd=*((int*)arg), nreads, fd1, result, mie_letture;
+ int fd=*((int*)arg), nreads, fd1, result, mie_letture1;
  char msg[256], newmsg[256];
  fd_set myfds, testfds;
  pthread_t add;
  
  stanze_presenti++;
- mie_letture=0;
+ mie_letture1=mie_letture;
  
  FD_ZERO(&myfds);
  FD_SET(fd, &myfds);
@@ -253,11 +252,11 @@ void *private_handler(void*arg){
  while(1){
     testfds=myfds;
     
-    if(mie_letture<avviso.scritture){
+    if(mie_letture1<avviso.scritture){
      inviamsg(avviso.text, myfds);
      pthread_mutex_lock(&mod_avviso);
      avviso.letture++;
-     mie_letture++;
+     mie_letture1++;
      pthread_mutex_unlock(&mod_avviso);
      }
     

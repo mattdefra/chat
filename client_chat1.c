@@ -38,7 +38,7 @@ void closeconnection();
    }
   printf("socket creato\n");
   addr.sin_family=AF_INET;
-  addr.sin_port=htons(5555);
+  addr.sin_port=htons(port);
   hp=gethostbyname(nome);
   if (hp==NULL){
    perror("host sconosciuto\n");
@@ -83,7 +83,11 @@ void closeconnection();
         }
       
     if(FD_ISSET(sock,&testfds)) {
-      read(sock, (void *) buffer, (size_t)sizeof(buffer));
+      nreads=read(sock, (void *) buffer, (size_t)sizeof(buffer));
+      if(nreads<=0){
+       printf("Server non più in funzione\n");
+       exit(EXIT_FAILURE);
+       }
       fputs(buffer, stdout);
       fflush(stdout);
       }

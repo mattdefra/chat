@@ -72,9 +72,13 @@ int main(){
         
       }
     if(FD_ISSET(sock,&testfds)) {
-      read(sock, (void *) buffer, (size_t)sizeof(buffer));
-      fputs(buffer, stdout);
-      fflush(stdout);
+      nreads=read(sock, (void *) buffer, (size_t)sizeof(buffer));
+      if(nreads<=0){
+       printf("Server non più in funzione\n");
+       exit(EXIT_FAILURE);
+       }
+       fputs(buffer, stdout);
+       fflush(stdout);
       }
      
      

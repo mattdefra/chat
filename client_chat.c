@@ -39,7 +39,7 @@ void added(char nome[256]);
    }
   printf("socket creato\n");
   addr.sin_family=AF_INET;
-  addr.sin_port=htons(5555);
+  addr.sin_port=htons(port);
   hp=gethostbyname(nome);
   if (hp==NULL){
    perror("host sconosciuto\n");
@@ -73,6 +73,9 @@ void added(char nome[256]);
    break;
     }
    }
+   
+   printf("\nLista comandi:\n@new per stanza privata\n@close per chiudere\n\n");
+   
    while(1){
     testfds=readfds;
     result=select(sock+1, &testfds, (fd_set*)0, (fd_set*)0, (struct timeval *) 0);
@@ -83,7 +86,7 @@ void added(char nome[256]);
     if(FD_ISSET(0,&testfds )){
        //nreads=read(0, (void *) buffer, (size_t)sizeof(buffer));
        fgets(buffer, 256 ,stdin);
-       if(strncmp("@help", buffer, 5)==0) request(nome);
+       if(strncmp("@new", buffer, 4)==0) request(nome);
     else {
         nreads=strlen(buffer);
        //printf("%s\n", buffer);
@@ -93,7 +96,11 @@ void added(char nome[256]);
         }
       }
     if(FD_ISSET(sock,&testfds)) {
-      read(sock, (void *) buffer, (size_t)sizeof(buffer));
+      nreads=read(sock, (void *) buffer, (size_t)sizeof(buffer));
+      if(nreads<=0){
+       printf("Server non più in funzione\n");
+       exit(EXIT_FAILURE);
+       }
       if(strncmp("@added", buffer, 6)==0) added(nome);
       fputs(buffer, stdout);
       fflush(stdout);
